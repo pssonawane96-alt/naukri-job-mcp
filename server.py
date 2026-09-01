@@ -1,13 +1,10 @@
 import os
-from mcp.server.fastmcp import FastMCP
+from fastmcp import FastMCP
 
-mcp = FastMCP(
-    "Naukri Job Finder",
-    json_response=True
-)
+mcp = FastMCP("Naukri Job Finder")
 
 
-@mcp.tool()
+@mcp.tool
 def search_jobs(
     keyword: str,
     location: str = "",
@@ -36,8 +33,10 @@ def search_jobs(
 
 
 if __name__ == "__main__":
+    port = int(os.environ.get("PORT", "10000"))
+
     mcp.run(
-        transport="streamable-http",
+        transport="http",
         host="0.0.0.0",
-        port=int(os.environ.get("PORT", 10000))
+        port=port
     )
