@@ -1,3 +1,4 @@
+import os
 from mcp.server.fastmcp import FastMCP
 
 mcp = FastMCP(
@@ -13,9 +14,7 @@ def search_jobs(
     experience: str = ""
 ) -> dict:
     """
-    Search for jobs matching the requested role, location and experience.
-
-    This initial version prepares the job-search request.
+    Search for jobs matching role, location and experience.
     """
 
     search_query = keyword
@@ -32,9 +31,13 @@ def search_jobs(
         "location": location,
         "experience": experience,
         "search_query": search_query,
-        "message": "Naukri Job Finder is connected and ready for job-search integration."
+        "message": "Naukri Job Finder is connected and ready."
     }
 
 
 if __name__ == "__main__":
-    mcp.run(transport="streamable-http")
+    mcp.run(
+        transport="streamable-http",
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000))
+    )
