@@ -1,7 +1,8 @@
 import os
+import requests
 from fastmcp import FastMCP
 
-mcp = FastMCP("Naukri Job Finder")
+mcp = FastMCP("Job Finder")
 
 
 @mcp.tool
@@ -11,25 +12,64 @@ def search_jobs(
     experience: str = ""
 ) -> dict:
     """
-    Search for jobs matching role, location and experience.
+    Search Google Jobs through SerpApi and return real job listings.
     """
 
-    search_query = keyword
+    api_key = os.environ.get("SERPAPI_KEY")
 
-    if location:
-        search_query += f" {location}"
+    if not api_key:
+        return {
+            "error": "SERPAPI_KEY is not configured in Render."
+        }
+
+    query = keyword
 
     if experience:
-        search_query += f" {experience}"
+        query += f" {experience} years experience"
 
-    return {
-        "status": "ready",
-        "job_role": keyword,
-        "location": location,
-        "experience": experience,
-        "search_query": search_query,
-        "message": "Naukri Job Finder is connected and ready."
+    params = {
+        "engine": "google_jobs",
+        "q": query,
+        "api_key": api_key
     }
+
+    if location:
+        params["location"] = location
+
+    try:
+        response = requests.get(
+            "https://serpapi.com/search.json",
+            params=params,
+            timeout=30
+        )
+
+        response.raise_for_status()
+        data = response.json()
+
+        jobs = []
+
+        for job in data.get("jobs_results", []):
+            jobs.append({
+                "title": job.get("title"),
+                "company": job.get("company_name"),
+                "location": job.get("location"),
+                "description": job.get("description"),
+                "posted_at": job.get("detected_extensions", {}).get("posted_at"),
+                "job_url": job.get("share_link")
+            })
+
+        return {
+            "query": query,
+            "location": location,
+            "experience": experience,
+            "total_results": len(jobs),
+            "jobs": jobs
+        }
+
+    except requests.RequestException as e:
+        return {
+            "error": f"Job search failed: {str(e)}"
+        }
 
 
 if __name__ == "__main__":
